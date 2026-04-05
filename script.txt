@@ -1,0 +1,170 @@
+-- =============================================
+-- SCRIPT BLOX FRUITS TỰ LÀM - FULL 1 FILE
+-- Phiên bản: 2026 - Tự code bởi bạn
+-- =============================================
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/Fluent.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "Script Của Tôi - Blox Fruits",
+    SubTitle = "Auto Farm + Fruit + Misc",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+})
+
+local Tabs = {
+    Farm = Window:AddTab({ Title = "Auto Farm", Icon = "home" }),
+    Quest = Window:AddTab({ Title = "Auto Quest", Icon = "list" }),
+    Fruit = Window:AddTab({ Title = "Fruit", Icon = "apple" }),
+    Misc = Window:AddTab({ Title = "Misc", Icon = "settings" }),
+}
+
+-- Biến toàn cục
+getgenv().Settings = {
+    AutoFarm = false,
+    AutoQuest = false,
+    FastAttack = false,
+    FruitESP = false,
+    WalkSpeed = 16,
+    JumpPower = 50,
+}
+
+local Player = game.Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+
+-- ==================== AUTO FARM ====================
+local function TweenTo(pos)
+    pcall(function()
+        local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
+            local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(pos + Vector3.new(0, 10, 5))})
+            tween:Play()
+            tween.Completed:Wait()
+        end
+    end)
+end
+
+spawn(function()
+    while task.wait(0.3) do
+        if getgenv().Settings.AutoFarm then
+            pcall(function()
+                local char = Player.Character
+                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                
+                for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+                    if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                        local distance = (enemy.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                        if distance < 500 then
+                            TweenTo(enemy.HumanoidRootPart.Position)
+                            
+                            -- Attack
+                            if getgenv().Settings.FastAttack then
+                                for i = 1, 8 do
+                                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Click")
+                                    task.wait(0.03)
+                                end
+                            end
+                            break
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- ==================== GUI TOGGLE ====================
+Tabs.Farm:AddToggle("AutoFarm", {
+    Title = "Auto Farm Level",
+    Default = false,
+    Callback = function(v) getgenv().Settings.AutoFarm = v end
+})
+
+Tabs.Farm:AddToggle("FastAttack", {
+    Title = "Fast Attack (Spam)",
+    Default = false,
+    Callback = function(v) getgenv().Settings.FastAttack = v end
+})
+
+-- Auto Quest (cơ bản)
+Tabs.Quest:AddToggle("AutoQuest", {
+    Title = "Auto Quest (Cơ bản)",
+    Default = false,
+    Callback = function(v) 
+        getgenv().Settings.AutoQuest = v 
+        if v then print("Auto Quest đang chạy (chỉ là demo)") end
+    end
+})
+
+-- Fruit ESP
+Tabs.Fruit:AddToggle("FruitESP", {
+    Title = "Fruit ESP",
+    Default = false,
+    Callback = function(v)
+        getgenv().Settings.FruitESP = v
+        if v then
+            print("Fruit ESP bật - Tìm trái ác quỷ")
+            -- Demo: Highlight trái
+            for _, item in pairs(workspace:GetDescendants()) do
+                if item:IsA("Tool") and string.find(item.Name:lower(), "fruit") then
+                    local hl = Instance.new("Highlight")
+                    hl.FillColor = Color3.fromRGB(255, 0, 255)
+                    hl.Parent = item
+                end
+            end
+        end
+    end
+})
+
+-- Misc
+Tabs.Misc:AddButton({
+    Title = "Anti AFK",
+    Description = "Không bị kick vì đứng yên",
+    Callback = function()
+        local vu = game:GetService("VirtualUser")
+        Player.Idled:connect(function()
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        end)
+        Fluent:Notify({Title = "Thông báo", Content = "Anti AFK đã bật!", Duration = 3})
+    end
+})
+
+Tabs.Misc:AddSlider("WalkSpeed", {
+    Title = "WalkSpeed",
+    Default = 16,
+    Min = 16,
+    Max = 300,
+    Callback = function(v)
+        pcall(function()
+            if Player.Character and Player.Character:FindFirstChild("Humanoid") then
+                Player.Character.Humanoid.WalkSpeed = v
+            end
+        end)
+    end
+})
+
+Tabs.Misc:AddSlider("JumpPower", {
+    Title = "JumpPower",
+    Default = 50,
+    Min = 50,
+    Max = 300,
+    Callback = function(v)
+        pcall(function()
+            if Player.Character and Player.Character:FindFirstChild("Humanoid") then
+                Player.Character.Humanoid.JumpPower = v
+            end
+        end)
+    end
+})
+
+-- Thông báo khi load xong
+Fluent:Notify({
+    Title = "Script Tự Làm",
+    Content = "Đã load thành công! Chọn tính năng ở menu.",
+    Duration = 5
+})
+
+print("Script Blox Fruits tự làm của bạn đã sẵn sàng!")
